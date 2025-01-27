@@ -47,4 +47,4 @@ tree -L 2
 │       ├── Laborator7.sql
 │       └── Laborator8.sql
 └── tutorial.md
-```# bdd
+```
