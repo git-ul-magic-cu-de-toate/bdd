@@ -1,0 +1,2 @@
+exec populateSongs;
+exec populateAlbums;

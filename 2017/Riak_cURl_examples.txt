@@ -1,0 +1,246 @@
+Ex. 1
+curl -v -XPUT http://172.19.3.36:8098/riak/favs/db \
+-H "Content-Type: text/html" \
+-d "<html><body><h1>My new favorite DB is RIAK</h1></body></html>"
+
+Ex. 2
+curl -v -X POST http://172.19.3.36:8098/riak/favs \
+-H "Content-Type: text/html" \
+-d "<html><body><h1>Auto generated key</h1></body></html>"
+
+Ex. 3
+curl -v -X DELETE http://172.19.3.36:8098/riak/favs/K42Xu7nxGdy7S7TlmVj5dY9P80
+
+curl -v -X DELETE http://172.19.3.36:8098/riak/favs/db
+
+Ex. 4
+curl -v -X GET http://172.19.3.36:8098/riak/favs/db
+
+Ex. 5
+curl -v -X PUT http://172.19.3.36:8098/riak/animals/ace \
+-H "Content-Type: application/json" \
+-d '{"nickname" : "The Wonder Dog", "breed" : "German Shepherd"}'
+
+curl -v -X PUT http://172.19.3.36:8098/riak/animals/polly?returnbody=true \
+-H "Content-Type: application/json" \
+-d '{"nickname" : "Sweet Polly Purebred", "breed" : "Purebred"}'
+
+Ex. 6 Link Walking
+
+curl -X PUT http://172.19.3.36:8098/riak/cages/1 \
+-H "Content-Type: application/json" \
+-H "Link: </riak/animals/polly>; riaktag=\"contains\"" \
+-d '{"room" : 101}'
+
+curl -X PUT http://172.19.3.36:8098/riak/cages/2 \
+-H "Content-Type: application/json" \
+-H "Link:</riak/animals/ace>;riaktag=\"contains\", </riak/cages/1>;riaktag=\"next_to\"" \
+-d '{"room" : 102}'
+
+curl -i http://172.19.3.36:8098/riak/animals/polly
+curl -i http://172.19.3.36:8098/riak/animals/ace
+
+curl -i http://172.19.3.36:8098/riak/cages/1
+curl -i http://172.19.3.36:8098/riak/cages/2
+
+curl http://172.19.3.36:8098/riak/cages/1/_,_,_
+curl http://172.19.3.36:8098/riak/cages/1/_,contains,_
+curl http://172.19.3.36:8098/riak/cages/2/animals,_,_
+curl http://172.19.3.36:8098/riak/cages/2/_,contains,_
+curl http://172.19.3.36:8098/riak/cages/2/_,next_to,_
+curl http://172.19.3.36:8098/riak/cages/2/cages,next_to,0/animals,_,_
+
+Ex. 7 MapReduce
+
+curl -X POST -H "content-type:application/json" http://172.19.3.36:8098/mapred --data @-
+{
+    "inputs":[ ["rooms","101"],["rooms","102"],["rooms","103"] ],
+    "query":[
+        {
+            "map":
+                {
+                    "language":"javascript",
+                    "source": "function(v) { var parsed_data = JSON.parse(v.values[0].data); var data = {}; data[parsed_data.style] = parsed_data.capacity; return [data];}"
+                }
+        }
+    ]
+}
+
+
+curl -X POST -H "content-type:application/json" http://172.19.3.36:8098/mapred --data @-
+{
+    "inputs": "rooms",
+    "query":[
+        {
+            "map":
+                {
+                    "language":"javascript",
+                    "source": "function(v) { var parsed_data = JSON.parse(v.values[0].data); var data = {}; data[parsed_data.style] = parsed_data.capacity; return [data];}"
+                }
+        }
+    ]
+}
+
+
+curl -X POST -H "content-type:application/json" http://172.19.3.36:8098/mapred --data @-
+{
+    "inputs": "rooms",
+    "query":[
+        {
+            "map":
+                {
+                    "language":"javascript",
+                    "source": "function(v) { var parsed_data = JSON.parse(v.values[0].data); var data = {}; data[parsed_data.style] = parsed_data.capacity; return [data];}"
+                }
+        },
+        {
+            "reduce":
+                {
+                    "language":"javascript",
+                    "source": "function(v) { var totals = {}; for (var i in v) { for(var style in v[i]) { if( totals[style] ) totals[style] += v[i][style]; else totals[style] = v[i][style]; } }return [totals];}"
+                }
+        }
+    ]
+}
+
+Ex. 8 Stored function
+
+curl -X PUT -H "content-type:application/json" \
+http://172.19.3.36:8098/riak/my_functions/map_capacity --data \
+"function(v) { var parsed_data = JSON.parse(v.values[0].data); var data = {}; data[parsed_data.style] = parsed_data.capacity; return [data];}"
+
+curl -X PUT -H "content-type:application/json" \
+http://172.19.3.36:8098/riak/my_functions/reduce_capacity --data \
+"function(v) { var totals = {}; for (var i in v) { for(var style in v[i]) { if( totals[style] ) totals[style] += v[i][style]; else totals[style] = v[i][style]; } }return [totals];}"
+
+curl -X POST -H "content-type:application/json" http://172.19.3.36:8098/mapred --data @-
+{
+    "inputs": "rooms",
+    "query":[
+        {
+            "map":
+                {
+                    "language": "javascript",
+                    "bucket": "my_functions",
+                    "key": "map_capacity"
+                }
+        },
+        {
+            "reduce":
+                {
+                    "language":"javascript",
+                    "bucket": "my_functions",
+                    "key": "reduce_capacity"
+                }
+        }
+    ]
+}
+
+
+Ex. 9 MapReduce Key Filters
+curl -X POST -H "content-type:application/json" http://172.19.3.36:8098/mapred --data @-
+{
+    "inputs": { 
+        "bucket": "rooms",
+        "key_filters":[["string_to_int"], ["less_than", 1000]]
+    },
+    "query":[
+        {
+            "map":
+                {
+                    "language": "javascript",
+                    "bucket": "my_functions",
+                    "key": "map_capacity"
+                }
+        },
+        {
+            "reduce":
+                {
+                    "language":"javascript",
+                    "bucket": "my_functions",
+                    "key": "reduce_capacity"
+                }
+        }
+    ]
+}
+
+Ex. 10 MapReduce and Link Walking
+
+# Get the animals by link
+curl -X POST -H "content-type:application/json" \
+http://172.19.3.36:8098/mapred --data @-
+{
+    "inputs":{ 
+        "bucket":"cages",
+        "key_filters":[["eq", "2"]]
+    },
+    "query":[
+        {
+            "link":
+                {
+                    "bucket":"animals",
+                    "keep":false
+                }
+        },
+        {
+            "map":
+                {
+                    "language":"javascript",
+                    "source":
+                    "function(v) { return v; }"
+                }
+        }
+    ]
+}
+
+
+
+curl -X POST -H "content-type:application/json" \
+http://172.19.3.36:8098/mapred --data @-
+{
+    "inputs": "cages",
+    "query":[
+        {
+            "link":
+                {
+                    "bucket": "animals",
+                    "keep":false
+                }
+        },
+        {
+            "map":
+                {
+                    "language":"javascript",
+                    "source":
+                    "function(v) { return v; }"
+                }
+        }
+    ]
+}
+
+# get next-to rooms
+curl -X POST -H "content-type:application/json" \
+http://172.19.3.36:8098/mapred --data @-
+{
+    "inputs": { 
+        "bucket":"cages",
+        "key_filters":[["eq", "2"]]
+    },
+    "query":[
+        {
+            "link":
+                {  
+                    "tag": "next_to",
+                    "keep":false
+                }
+        },
+        {
+            "map":
+                {
+                    "language":"javascript",
+                    "source":
+                    "function(v) { return v; }"
+                }
+        }
+    ]
+}
