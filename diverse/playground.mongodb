@@ -1,0 +1,55 @@
+
+// ### Pentru toate documentele publicate in primul an disponibil in colectie (2p) care au autor sau "male" sau "female" (1p)
+// afisati cati autori sunt in urmatoarele categorii de varsta: 21-; 22 - 35; 36 - 55; 56+ (3p).
+// Pentru cea mai populara categorie de varsta afisati care este numarul mediu de cuvinte folosite vs numarul mediu de non-cuvinte, adica entitati si hashtags (4p).
+// Exemplu de rezultat "21-: 10 persoane; 22 - 25: 3 persoane.... Pentru categoria 21- se folosesc, in general, 7 cuvinte si 2 non-cuvinte".
+
+use("BD2");
+
+db.documents.distinct("age", {gender: "female"}).sort()
+
+const firstYear = db.documents.aggregate([
+  {
+    $group: {
+      _id: null,
+      minYear: { $min: { $year: "$date" } },
+    },
+  },
+]).next().minYear;
+
+printjson(firstYear);
+
+const maleOrFemaleAuthors = db.documents.aggregate([
+  {
+    $match: {
+      $expr: { $eq: [{ $year: "$date" }, firstYear] },
+      $expr: { $or: [{ gender: "male", gender: "female"}]},
+    }}]);
+
+printjson(maleOrFemaleAuthors);
+
+const ageCategories = db.documents.aggregate([
+  {
+    $match: {
+      $expr: { $eq: [{ $year: "$date" }, firstYear] },
+      $expr: { $or: [{ gender: "male", gender: "female"}]},
+    }},
+    {
+      $project: {
+        _id: 0,
+        age: 1,
+      }
+    },
+    {
+      $bucket: {
+        groupBy: "$age",
+        boundaries: [21, 22, 36, 56],
+        default: "56+",
+        output: {
+          "count": { $sum: 1 }
+        }
+      }
+    }
+]);
+
+printjson(ageCategories);

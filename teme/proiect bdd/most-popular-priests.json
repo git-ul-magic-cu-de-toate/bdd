@@ -1,0 +1,72 @@
+[
+  {
+    "Biserica": "Catedrala Adormirea Maicii Domnului",
+    "Nume": "Matei",
+    "Prenume": "Victor",
+    "NumarEnoriasi": 102,
+    "SumaTotalaDonata": 26861.88
+  },
+  {
+    "Biserica": "Biserica Sf. Ana",
+    "Nume": "Pavel",
+    "Prenume": "Andrei",
+    "NumarEnoriasi": 94,
+    "SumaTotalaDonata": 26761.41
+  },
+  {
+    "Biserica": "Biserica Sf. Andrei",
+    "Nume": "Avram",
+    "Prenume": "Cornel",
+    "NumarEnoriasi": 88,
+    "SumaTotalaDonata": 24622.18
+  },
+  {
+    "Biserica": "Catedrala Înălțării Domnului",
+    "Nume": "Popa",
+    "Prenume": "Razvan",
+    "NumarEnoriasi": 85,
+    "SumaTotalaDonata": 22256.2
+  },
+  {
+    "Biserica": "Biserica Speranței",
+    "Nume": "Vasilescu",
+    "Prenume": "Razvan",
+    "NumarEnoriasi": 82,
+    "SumaTotalaDonata": 24518.73
+  },
+  {
+    "Biserica": "Catedrala Mântuirii Neamului",
+    "Nume": "Dumitru",
+    "Prenume": "Ion",
+    "NumarEnoriasi": 80,
+    "SumaTotalaDonata": 20909.39
+  },
+  {
+    "Biserica": "Biserica Nașterii Domnului",
+    "Nume": "Gheorghe",
+    "Prenume": "Daniel",
+    "NumarEnoriasi": 71,
+    "SumaTotalaDonata": 21125.06
+  },
+  {
+    "Biserica": "Biserica Sf. Ioan",
+    "Nume": "Pavel",
+    "Prenume": "Marian",
+    "NumarEnoriasi": 59,
+    "SumaTotalaDonata": 15549.28
+  },
+  {
+    "Biserica": "Biserica Sf. Pavel",
+    "Nume": "Dobre",
+    "Prenume": "Ion",
+    "NumarEnoriasi": 54,
+    "SumaTotalaDonata": 14168.12
+  },
+  {
+    "Biserica": "Biserica Sf. Mihail",
+    "Nume": "Istrate",
+    "Prenume": "Eduard",
+    "NumarEnoriasi": 53,
+    "SumaTotalaDonata": 15678.73
+  }
+]

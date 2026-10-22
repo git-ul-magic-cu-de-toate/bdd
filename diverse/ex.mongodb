@@ -1,0 +1,152 @@
+// 1. Să se găsească documentele care conțin cel mai popular hashtag.
+// 2. Să se găsească cel mai activ autor după numărul de documente create.
+// 3. Pentru toate documentele care content cel mai popular hashtag vedeti distributia de varsta.
+
+// Bonus:
+// 1. Cate documente cu autori Tineri (<= 35 de ani) avem pentru fiecare gen?
+// 2. Pentru documentele din laboratorul 11 care se afla in cercul de centru (20,20) si raza 100,
+// care sunt top 3 cele mai folosite Tipuri de Enitati (campul namedEntities.type; la egalitate sortati alfabetic)?
+
+// 1. Să se găsească documentele care conțin cel mai popular hashtag.
+
+use("BD2");
+
+const allHashtags = db.documents
+  .aggregate([
+    { $unwind: "$hashtags" },
+
+    { $group: { _id: "$hashtags", count: { $sum: 1 } } },
+
+    { $sort: { count: -1 } },
+  ])
+  .toArray();
+
+console.log(allHashtags);
+
+const mostPopularHashtag = db.documents
+  .aggregate([
+    { $unwind: "$hashtags" },
+
+    { $group: { _id: "$hashtags", count: { $sum: 1 } } },
+
+    { $sort: { count: -1 } },
+
+    { $limit: 1 },
+  ])
+  .toArray();
+
+console.log(mostPopularHashtag);
+
+db.documents.find({ hashtags: mostPopularHashtag[0]._id });
+
+// 2. Să se găsească cel mai activ autor după numărul de documente create.
+
+// use('BD2');
+// db.getCollection('documents').aggregate([
+//   // Group by author and count the number of documents created by each author
+//   { $group: { _id: '$author', documentCount: { $sum: 1 } } },
+//   // Sort by document count in descending order to find the most active author
+//   { $sort: { documentCount: -1 } },
+//   // Limit to the most active author
+//   { $limit: 1 }
+// ]);
+
+// // 3. Pentru toate documentele care content cel mai popular hashtag vedeti distributia de varsta.
+
+// use("BD2");
+// const ageDistributionForAllHashtags = db.documents
+//   .aggregate([
+//     { $unwind: "$hashtags" },
+//     { $group: { _id: "$hashtags", ages: { $push: "$age" } } },
+//     { $unwind: "$ages" },
+//     { $group: { _id: "$_id", ages: { $push: "$ages" } } },
+//     { $project: { _id: 1, ages: 1 } },
+//   ])
+//   .toArray();
+
+// console.log(ageDistributionForAllHashtags);
+
+// const mostPopularHashtag = db.documents
+//   .aggregate([
+//     { $unwind: "$hashtags" },
+
+//     { $group: { _id: "$hashtags", count: { $sum: 1 } } },
+
+//     { $sort: { count: -1 } },
+
+//     { $limit: 1 },
+//   ])
+//   .toArray();
+
+// // db.documents.find({ hashtags: "RT" });
+
+// console.log("Hashtag-ul cel mai popular este:", mostPopularHashtag);
+
+// const ageDistribution = db.documents
+//   .aggregate([
+//     { $match: { hashtags: mostPopularHashtag[0]._id } },
+//     { $group: { _id: "$age", count: { $sum: 1 } } },
+//     { $sort: { _id: 1 } },
+//   ])
+//   .toArray();
+
+// console.log(
+//   "Distribuția de vârstă pentru hashtag-ul",
+//   mostPopularHashtag,
+//   "este:"
+// );
+// console.log(ageDistribution);
+
+use("BD2");
+db.getCollection("documents").aggregate([
+  // Unwind the hashtags array to deconstruct the array field
+  { $unwind: "$hashtags" },
+  // Group by each hashtag and count their occurrences
+  { $group: { _id: "$hashtags", count: { $sum: 1 } } },
+  // Sort by count in descending order to find the most popular hashtag
+  { $sort: { count: -1 } },
+  // Limit to the most popular hashtag
+  { $limit: 1 },
+  // Lookup documents containing the most popular hashtag
+  {
+    $lookup: {
+      from: "documents",
+      localField: "_id",
+      foreignField: "hashtags",
+      as: "documentsWithPopularHashtag",
+    },
+  },
+  // Unwind the documentsWithPopularHashtag array to get individual documents
+  { $unwind: "$documentsWithPopularHashtag" },
+  // Replace root with the documents containing the most popular hashtag
+  { $replaceRoot: { newRoot: "$documentsWithPopularHashtag" } },
+  // Group by age to get the distribution of age
+  { $group: { _id: "$age", count: { $sum: 1 } } },
+  // Sort by age in ascending order
+  { $sort: { _id: 1 } },
+]);
+
+// 1. Cate documente cu autori Tineri (<= 35 de ani) avem pentru fiecare gen?
+
+// use("BD2");
+// const youngAuthors = db.documents
+//   .aggregate([
+//     { $match: { age: { $lte: 35 } } },
+//     { $group: { _id: "$gender", count: { $sum: 1 } } },
+//     { $sort: { count: -1 } },
+//   ])
+//   .toArray();
+
+// console.log(youngAuthors);
+
+// db.documents.find({ age: { $lte: 35 } });
+
+use("BD2");
+db.getCollection("documents").aggregate([
+  // Match documents with authors who are 35 years old or younger
+  { $match: { age: { $lte: 35 } } },
+  // Group by gender and count the number of documents for each gender
+  { $group: { _id: "$gender", documentCount: { $sum: 1 } } },
+  // Sort by gender in ascending order
+  { $sort: { _id: 1 } },
+]);
